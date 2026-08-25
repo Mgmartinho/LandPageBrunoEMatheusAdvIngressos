@@ -17,10 +17,19 @@ $formData = [
     "email" => "",
 ];
 
-$paymentLink = "https://pag.ae/8251kCtcP";
-$paymentUnlocked = false;
-$eventWhatsappNumber = preg_replace("/\D+/", "", (string) getenv("EVENT_WHATSAPP_NUMBER"));
-$eventWhatsappMessage = rawurlencode("Olá! Gostaria de tirar uma dúvida sobre a Imersão da Base Criminal.");
+$ticketProductSlug = "ingresso-imersao-base-criminal";
+$ticketProduct = function_exists("wc_get_product")
+    ? wc_get_product(get_page_by_path($ticketProductSlug, OBJECT, "product"))
+    : false;
+$paymentUnlocked = $ticketProduct instanceof WC_Product && $ticketProduct->is_purchasable() && $ticketProduct->is_in_stock();
+$paymentLink = $paymentUnlocked
+    ? add_query_arg([
+        "add-to-cart" => (string) $ticketProduct->get_id(),
+        "quantity" => "1",
+    ], wc_get_checkout_url())
+    : "#ingresso";
+$eventWhatsappNumber = preg_replace("/\D+/", "", (string) (getenv("EVENT_WHATSAPP_NUMBER") ?: "+55 11 93940-2802"));
+$eventWhatsappMessage = rawurlencode("Olá, gostaria de tirar algumas dúvidas referentes ao curso da Imersão da Base Criminal.");
 $eventWhatsappLink = $eventWhatsappNumber !== ""
     ? "https://wa.me/" . $eventWhatsappNumber . "?text=" . $eventWhatsappMessage
     : "#captura";
@@ -275,7 +284,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                         <span>Duas experiências.</span></h2>
                     <div class="speaker-grid">
                         <div class="speaker-card">
-                            <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/quem-estara-com-a-gente-1.jpeg'); ?>" alt="Dr. Bruno Santana, advogado criminalista">
+                            <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/BrunoSantana.jpeg'); ?>" alt="Dr. Bruno Santana, advogado criminalista">
                             <h3>Dr. Bruno Santana</h3>
                             <span>Advogado criminalista | Estratégia e defesa de urgência</span>
                             <p class="speaker-trajectory">Com 14 anos de atuação fictícia na advocacia criminal, Bruno construiu sua trajetória acompanhando prisões em flagrante, audiências de custódia e pedidos de liberdade em diferentes fases do processo.</p>
@@ -285,7 +294,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             </ul>
                         </div>
                         <div class="speaker-card">
-                            <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/quem-estara-com-a-gente-2.jpeg'); ?>" alt="Dr. Matheus Alexandre, advogado criminalista">
+                            <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Matheus.jpeg'); ?>" alt="Dr. Matheus Alexandre, advogado criminalista">
                             <h3>Dr. Matheus Alexandre</h3>
                             <span>Advogado criminalista | Prática e formação profissional</span>
                             <p class="speaker-trajectory">Com uma trajetória fictícia de 11 anos no Direito Penal, Matheus atua na construção de estratégias defensivas e na formação prática de novos profissionais para decisões mais seguras desde o primeiro atendimento.</p>
@@ -337,8 +346,8 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <li>Certificado de participação</li>
                             <li>Brinde exclusivo de edição limitada</li>
                         </ul>
-                    </div><?php if ($paymentUnlocked): ?><a class="event-button" href="<?php echo esc_url($paymentLink); ?>" target="_blank" rel="noopener">Quero garantir meu ingresso por R$
-                        397,00</a><?php else: ?><a class="event-button" href="#captura">Preencha o formulário para continuar</a><?php endif; ?>
+                    </div><?php if ($paymentUnlocked): ?><a class="event-button" href="<?php echo esc_url($paymentLink); ?>">Quero garantir meu ingresso por R$
+                        397,00</a><?php else: ?><p class="event-message">As vagas para esta imersão estão esgotadas.</p><?php endif; ?>
                 </div>
             </section>
 
@@ -374,7 +383,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
                             <div class="field full"><button class="event-button" type="submit">Garantir minha
                                     vaga</button></div>
                             <?php if ($paymentUnlocked): ?>
-                                <div class="field full"><a class="event-button" href="<?php echo esc_url($paymentLink); ?>" target="_blank" rel="noopener">Ir para o pagamento PagBank</a></div>
+                                <div class="field full"><a class="event-button" href="<?php echo esc_url($paymentLink); ?>">Ir para o pagamento</a></div>
                             <?php endif; ?>
                         </form>
                     </div>
