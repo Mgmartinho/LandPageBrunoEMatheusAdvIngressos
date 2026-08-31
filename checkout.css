@@ -1,0 +1,377 @@
+/* =========================================================
+   Base Criminal — WooCommerce Checkout Blocks
+   Carregado somente no template page-finalizarcompra.php
+   ========================================================= */
+
+body.page-template-page-finalizarcompra {
+    background: #10100f;
+}
+
+body.page-template-page-finalizarcompra .site,
+body.page-template-page-finalizarcompra {
+    overflow-x: clip;
+}
+
+.checkout-premium {
+    --checkout-bg: #10100f;
+    --checkout-panel: #fffdf8;
+    --checkout-panel-soft: #f7f2e9;
+    --checkout-ink: #211d18;
+    --checkout-muted: #746f66;
+    --checkout-line: #ddd4c5;
+    --checkout-gold: #bd8b45;
+    --checkout-gold-dark: #8f642d;
+    --checkout-gold-light: #d7b274;
+    --checkout-radius: 18px;
+
+    min-height: 100vh;
+    padding: clamp(34px, 6vw, 72px) 20px 88px;
+    background:
+        radial-gradient(circle at 15% 0%, rgba(189, 139, 69, .16), transparent 30%),
+        radial-gradient(circle at 90% 90%, rgba(189, 139, 69, .08), transparent 34%),
+        var(--checkout-bg);
+    color: var(--checkout-ink);
+}
+
+.checkout-premium *,
+.checkout-premium *::before,
+.checkout-premium *::after {
+    box-sizing: border-box;
+}
+
+.checkout-premium__shell {
+    width: min(1180px, 100%);
+    margin: 0 auto;
+}
+
+.checkout-premium__top {
+    display: flex;
+    align-items: end;
+    justify-content: space-between;
+    gap: 30px;
+    margin-bottom: 30px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(255, 253, 248, .15);
+}
+
+.checkout-premium__eyebrow {
+    margin: 0 0 8px;
+    color: var(--checkout-gold-light);
+    font-family: "Manrope", sans-serif;
+    font-size: .72rem;
+    font-weight: 800;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+}
+
+.checkout-premium__top h1 {
+    max-width: none;
+    margin: 0;
+    color: #fffdf8;
+    font-family: "Playfair Display", serif;
+    font-size: clamp(2.15rem, 4vw, 3.7rem);
+    font-weight: 600;
+    letter-spacing: -.035em;
+    line-height: 1.02;
+}
+
+.checkout-premium__subtitle {
+    max-width: 520px;
+    margin: 12px 0 0;
+    color: #bcb4a8;
+    font-size: .96rem;
+}
+
+.checkout-premium__trust {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    max-width: 390px;
+}
+
+.checkout-premium__trust span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 34px;
+    padding: 7px 11px;
+    border: 1px solid rgba(215, 178, 116, .32);
+    border-radius: 999px;
+    color: #ddd4c7;
+    font-size: .74rem;
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+/* Não redefinimos display/grid do formulário interno do WooCommerce.
+   O Blocks mantém sua estrutura e comportamento nativos. */
+.checkout-premium .wp-block-woocommerce-checkout,
+.checkout-premium .wc-block-checkout {
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+}
+
+/* Colunas nativas do checkout */
+.checkout-premium .wc-block-checkout__main,
+.checkout-premium .wp-block-woocommerce-checkout-fields-block,
+.checkout-premium .wc-block-checkout__sidebar,
+.checkout-premium .wp-block-woocommerce-checkout-totals-block {
+    min-width: 0;
+}
+
+/* Cartões das etapas sem alterar a mecânica de labels/inputs */
+.checkout-premium .wc-block-components-checkout-step {
+    margin-bottom: 16px !important;
+    padding: clamp(20px, 3vw, 30px) !important;
+    border: 1px solid rgba(33, 29, 24, .08) !important;
+    border-radius: var(--checkout-radius) !important;
+    background: var(--checkout-panel) !important;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .18) !important;
+}
+
+.checkout-premium .wc-block-components-checkout-step__heading {
+    margin-bottom: 18px !important;
+}
+
+.checkout-premium .wc-block-components-checkout-step__title,
+.checkout-premium .wc-block-components-title,
+.checkout-premium .wc-block-components-order-summary__title {
+    color: var(--checkout-ink) !important;
+    font-family: "Playfair Display", serif !important;
+    font-weight: 600 !important;
+    letter-spacing: -.015em !important;
+}
+
+.checkout-premium .wc-block-components-checkout-step__description,
+.checkout-premium .wc-block-components-product-metadata,
+.checkout-premium .wc-block-components-address-card__address-section,
+.checkout-premium .wc-block-components-checkbox__label {
+    color: var(--checkout-muted) !important;
+}
+
+/* Inputs: preserva dimensões/posicionamento de label flutuante do Woo Blocks. */
+.checkout-premium .wc-block-components-text-input input,
+.checkout-premium .wc-block-components-combobox .wc-block-components-combobox-control input,
+.checkout-premium .wc-block-components-textarea {
+    border-color: var(--checkout-line) !important;
+    border-radius: 10px !important;
+    background: #fff !important;
+    color: var(--checkout-ink) !important;
+    box-shadow: none !important;
+}
+
+.checkout-premium .wc-block-components-text-input input:focus,
+.checkout-premium .wc-block-components-combobox .wc-block-components-combobox-control input:focus,
+.checkout-premium .wc-block-components-textarea:focus {
+    border-color: var(--checkout-gold) !important;
+    box-shadow: 0 0 0 3px rgba(189, 139, 69, .13) !important;
+    outline: 0 !important;
+}
+
+.checkout-premium .wc-block-components-text-input label,
+.checkout-premium .wc-block-components-combobox label {
+    color: #655d52 !important;
+    text-transform: none !important;
+    letter-spacing: 0 !important;
+}
+
+.checkout-premium input[type="checkbox"],
+.checkout-premium input[type="radio"] {
+    accent-color: var(--checkout-gold);
+}
+
+/* Pagamento */
+.checkout-premium .wc-block-components-radio-control {
+    overflow: hidden;
+    border: 1px solid var(--checkout-line) !important;
+    border-radius: 12px !important;
+    background: #fff !important;
+}
+
+.checkout-premium .wc-block-components-radio-control__option {
+    background: #fff !important;
+}
+
+.checkout-premium .wc-block-components-radio-control__option:hover,
+.checkout-premium .wc-block-components-radio-control__option-checked {
+    background: #fbf7f0 !important;
+}
+
+/* Sidebar / resumo */
+.checkout-premium .wc-block-checkout__sidebar,
+.checkout-premium .wp-block-woocommerce-checkout-totals-block {
+    align-self: start;
+}
+
+.checkout-premium .wp-block-woocommerce-checkout-order-summary-block,
+.checkout-premium .wc-block-checkout__sidebar > .wc-block-components-sidebar-layout__sidebar {
+    overflow: hidden;
+    border: 1px solid rgba(33, 29, 24, .08) !important;
+    border-radius: var(--checkout-radius) !important;
+    background: var(--checkout-panel-soft) !important;
+    box-shadow: 0 18px 50px rgba(0, 0, 0, .18) !important;
+}
+
+.checkout-premium .wp-block-woocommerce-checkout-order-summary-block {
+    padding: clamp(20px, 3vw, 28px) !important;
+}
+
+.checkout-premium .wc-block-components-order-summary {
+    background: transparent !important;
+}
+
+.checkout-premium .wc-block-components-order-summary-item,
+.checkout-premium .wc-block-components-totals-wrapper {
+    border-color: var(--checkout-line) !important;
+}
+
+.checkout-premium .wc-block-components-order-summary-item__description,
+.checkout-premium .wc-block-components-order-summary-item__individual-price,
+.checkout-premium .wc-block-components-order-summary-item__total-price,
+.checkout-premium .wc-block-components-totals-item__label,
+.checkout-premium .wc-block-components-totals-item__value {
+    color: var(--checkout-ink) !important;
+}
+
+.checkout-premium .wc-block-components-order-summary-item__image img {
+    border-radius: 9px;
+}
+
+.checkout-premium .wc-block-components-totals-footer-item {
+    border-top: 1px solid var(--checkout-line) !important;
+}
+
+.checkout-premium .wc-block-components-totals-footer-item .wc-block-components-totals-item__value {
+    color: var(--checkout-gold-dark) !important;
+    font-weight: 800 !important;
+}
+
+/* Cupom */
+.checkout-premium .wc-block-components-totals-coupon__button,
+.checkout-premium .wc-block-components-totals-coupon button {
+    border-color: var(--checkout-gold) !important;
+    border-radius: 9px !important;
+    color: var(--checkout-gold-dark) !important;
+}
+
+/* Botão principal */
+.checkout-premium .wc-block-components-checkout-place-order-button {
+    min-height: 58px !important;
+    border: 1px solid var(--checkout-gold-light) !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #c59652, var(--checkout-gold-dark)) !important;
+    color: #fffdf8 !important;
+    font-family: "Manrope", sans-serif !important;
+    font-size: .82rem !important;
+    font-weight: 800 !important;
+    letter-spacing: .08em !important;
+    text-transform: uppercase !important;
+    box-shadow: 0 12px 28px rgba(143, 100, 45, .25) !important;
+    transition: transform .2s ease, filter .2s ease, box-shadow .2s ease;
+}
+
+.checkout-premium .wc-block-components-checkout-place-order-button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.04);
+    box-shadow: 0 16px 34px rgba(143, 100, 45, .32) !important;
+}
+
+.checkout-premium .wc-block-components-checkout-place-order-button:focus-visible {
+    outline: 3px solid rgba(215, 178, 116, .45) !important;
+    outline-offset: 3px !important;
+}
+
+.checkout-premium a {
+    color: var(--checkout-gold-dark);
+}
+
+.checkout-premium .wc-block-components-notice-banner {
+    border-radius: 10px !important;
+}
+
+/* Em telas amplas, mantém o resumo visível quando a versão do Blocks
+   renderiza a sidebar como coluna independente. */
+@media (min-width: 1001px) {
+    .checkout-premium .wc-block-checkout__sidebar,
+    .checkout-premium .wp-block-woocommerce-checkout-totals-block {
+        position: sticky;
+        top: 24px;
+    }
+}
+
+@media (max-width: 1000px) {
+    .checkout-premium {
+        padding-inline: 16px;
+    }
+
+    .checkout-premium__top {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .checkout-premium__trust {
+        justify-content: flex-start;
+        max-width: none;
+    }
+
+    .checkout-premium .wc-block-checkout__sidebar,
+    .checkout-premium .wp-block-woocommerce-checkout-totals-block {
+        position: static;
+    }
+}
+
+@media (max-width: 600px) {
+    .checkout-premium {
+        padding: 28px 10px 52px;
+    }
+
+    .checkout-premium__top {
+        gap: 18px;
+        margin-bottom: 20px;
+        padding-bottom: 18px;
+    }
+
+    .checkout-premium__trust span {
+        font-size: .69rem;
+    }
+
+    .checkout-premium .wc-block-components-checkout-step,
+    .checkout-premium .wp-block-woocommerce-checkout-order-summary-block {
+        padding: 18px !important;
+        border-radius: 13px !important;
+    }
+
+    .checkout-premium .wc-block-components-checkout-place-order-button {
+        min-height: 54px !important;
+        font-size: .75rem !important;
+    }
+}
+
+
+/* =========================================================
+   RESUMO DO PEDIDO - ITEM COMPACTO
+   Oculta apenas o preco individual e imagens extras que possam
+   vir da descricao/metadados do produto. A miniatura oficial,
+   subtotal e total permanecem visiveis.
+   ========================================================= */
+
+.checkout-premium .wc-block-components-order-summary-item__individual-prices,
+.checkout-premium .wc-block-components-order-summary-item__individual-price {
+    display: none !important;
+}
+
+/* Imagens inseridas na descricao/metadados do produto nao devem
+   aparecer ampliadas dentro do resumo do checkout. */
+.checkout-premium .wc-block-components-order-summary-item__description > img,
+.checkout-premium .wc-block-components-order-summary-item__description .wc-block-components-product-metadata img,
+.checkout-premium .wc-block-components-product-metadata img {
+    display: none !important;
+}
+
+/* Se algum plugin renderizar uma imagem/conteudo promocional dentro
+   da descricao do item, limita-o sem afetar a miniatura oficial. */
+.checkout-premium .wc-block-components-order-summary-item__description .price,
+.checkout-premium .wc-block-components-order-summary-item__description .woocommerce-Price-amount:not(.wc-block-components-order-summary-item__total-price *) {
+    display: none !important;
+}

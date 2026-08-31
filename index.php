@@ -3,419 +3,252 @@ declare(strict_types=1);
 
 /**
  * Template Name: Landing Page Palestra
- * Description: Landing page para captacao de leads e venda de palestra.
+ * Description: Landing page para captação de leads e venda de palestra.
  */
 
-$errors = [];
-$successMessage = "";
-$noticeMessage = "";
-
-$formData = [
-    "nome" => "",
-    "empresa" => "",
-    "whatsapp" => "",
-    "email" => "",
-];
-
-$ticketProductSlug = "ingresso-imersao-base-criminal";
-$ticketProduct = function_exists("wc_get_product")
-    ? wc_get_product(get_page_by_path($ticketProductSlug, OBJECT, "product"))
-    : false;
+$ticketProductId = 18;
+$ticketProduct = function_exists("wc_get_product") ? wc_get_product($ticketProductId) : false;
 $paymentUnlocked = $ticketProduct instanceof WC_Product && $ticketProduct->is_purchasable() && $ticketProduct->is_in_stock();
+
+// PORCENTAGEM MANUAL DA FAIXA DE ALERTA (use um valor de 0 a 100).
+// Exemplo: 50 significa que 50% das vagas já foram vendidas.
+$ticketSoldPercentage = 47;
+$ticketSoldPercentage = max(0, min(100, (int) $ticketSoldPercentage));
 $paymentLink = $paymentUnlocked
-    ? add_query_arg([
-        "add-to-cart" => (string) $ticketProduct->get_id(),
-        "quantity" => "1",
-    ], wc_get_checkout_url())
+    ? add_query_arg(["add-to-cart" => (string) $ticketProduct->get_id(), "quantity" => "1"], basecriminal_checkout_url())
     : "#ingresso";
 $eventWhatsappNumber = preg_replace("/\D+/", "", (string) (getenv("EVENT_WHATSAPP_NUMBER") ?: "+55 11 93940-2802"));
 $eventWhatsappMessage = rawurlencode("Olá, gostaria de tirar algumas dúvidas referentes ao curso da Imersão da Base Criminal.");
-$eventWhatsappLink = $eventWhatsappNumber !== ""
-    ? "https://wa.me/" . $eventWhatsappNumber . "?text=" . $eventWhatsappMessage
-    : "#captura";
+$eventWhatsappLink = $eventWhatsappNumber !== "" ? "https://wa.me/" . $eventWhatsappNumber . "?text=" . $eventWhatsappMessage : "#ingresso";
 
-function h(string $value): string
-{
-    return htmlspecialchars($value, ENT_QUOTES, "UTF-8");
-}
-
-if ($_SERVER["REQUEST_METHOD"] === "POST") {
-    $formData["nome"] = trim((string) ($_POST["nome"] ?? ""));
-    $formData["empresa"] = trim((string) ($_POST["empresa"] ?? ""));
-    $formData["whatsapp"] = trim((string) ($_POST["whatsapp"] ?? ""));
-    $formData["email"] = trim((string) ($_POST["email"] ?? ""));
-
-    if ($formData["nome"] === "") {
-        $errors[] = "Informe seu nome.";
-    }
-
-    if ($formData["empresa"] === "") {
-        $errors[] = "Informe sua empresa.";
-    }
-
-    if ($formData["whatsapp"] === "") {
-        $errors[] = "Informe seu WhatsApp.";
-    }
-
-    if (!filter_var($formData["email"], FILTER_VALIDATE_EMAIL)) {
-        $errors[] = "Informe um e-mail valido.";
-    }
-
-    if (!$errors) {
-        try {
-            $isVercel = getenv("VERCEL") === "1";
-            $storageDir = $isVercel
-                ? sys_get_temp_dir() . DIRECTORY_SEPARATOR . "palestra-advogados"
-                : __DIR__ . DIRECTORY_SEPARATOR . "storage";
-            if (!is_dir($storageDir) && !mkdir($storageDir, 0755, true) && !is_dir($storageDir)) {
-                throw new RuntimeException("Nao foi possivel criar a pasta de armazenamento.");
-            }
-
-            $timestamp = date("Y-m-d H:i:s");
-
-            $csvPath = $storageDir . DIRECTORY_SEPARATOR . "leads.csv";
-            $csvFileExists = file_exists($csvPath) && filesize($csvPath) > 0;
-            $csvHandle = fopen($csvPath, "ab");
-
-            if ($csvHandle === false) {
-                throw new RuntimeException("Nao foi possivel abrir o arquivo CSV.");
-            }
-
-            if (!$csvFileExists) {
-                fputcsv($csvHandle, ["nome", "empresa", "whatsapp", "email", "origem", "capturado_em"]);
-            }
-
-            fputcsv($csvHandle, [
-                $formData["nome"],
-                $formData["empresa"],
-                $formData["whatsapp"],
-                $formData["email"],
-                "mentoria-advocacia",
-                $timestamp,
-            ]);
-
-            fclose($csvHandle);
-
-            $webhookUrl = trim((string) getenv("LEADS_WEBHOOK_URL"));
-            if ($webhookUrl !== "") {
-                $payload = json_encode([
-                    "nome" => $formData["nome"],
-                    "empresa" => $formData["empresa"],
-                    "whatsapp" => $formData["whatsapp"],
-                    "email" => $formData["email"],
-                    "origem" => "mentoria-advocacia",
-                    "capturado_em" => $timestamp,
-                ], JSON_THROW_ON_ERROR);
-
-                $context = stream_context_create([
-                    "http" => [
-                        "method" => "POST",
-                        "header" => "Content-Type: application/json\r\n",
-                        "content" => $payload,
-                        "timeout" => 8,
-                        "ignore_errors" => true,
-                    ],
-                ]);
-                $webhookResponse = @file_get_contents($webhookUrl, false, $context);
-                $statusLine = $http_response_header[0] ?? "";
-                if ($webhookResponse === false || !preg_match("/\\s2\\d{2}\\s/", $statusLine)) {
-                    throw new RuntimeException("Nao foi possivel enviar o cadastro para a integracao.");
-                }
-            } elseif ($isVercel) {
-                $noticeMessage = "Configure LEADS_WEBHOOK_URL na Vercel para persistir os cadastros.";
-            }
-
-            if (!$isVercel && extension_loaded("pdo_sqlite")) {
-                $sqlitePath = $storageDir . DIRECTORY_SEPARATOR . "leads.sqlite";
-                $pdo = new PDO("sqlite:" . $sqlitePath);
-                $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-
-                $pdo->exec(
-                    "CREATE TABLE IF NOT EXISTS leads (
-                        id INTEGER PRIMARY KEY AUTOINCREMENT,
-                        nome TEXT NOT NULL,
-                        empresa TEXT NOT NULL,
-                        whatsapp TEXT NOT NULL,
-                        email TEXT NOT NULL,
-                        origem TEXT NOT NULL,
-                        capturado_em TEXT NOT NULL
-                    )"
-                );
-
-                $stmt = $pdo->prepare(
-                    "INSERT INTO leads (nome, empresa, whatsapp, email, origem, capturado_em)
-                     VALUES (:nome, :empresa, :whatsapp, :email, :origem, :capturado_em)"
-                );
-
-                $stmt->execute([
-                    ":nome" => $formData["nome"],
-                    ":empresa" => $formData["empresa"],
-                    ":whatsapp" => $formData["whatsapp"],
-                    ":email" => $formData["email"],
-                    ":origem" => "mentoria-advocacia",
-                    ":capturado_em" => $timestamp,
-                ]);
-            } elseif (!$isVercel && !extension_loaded("pdo_sqlite")) {
-                $noticeMessage = "Cadastro salvo no CSV. SQLite nao esta ativo neste ambiente.";
-            }
-
-            $notificationEmail = trim((string) getenv("LEADS_NOTIFICATION_EMAIL"));
-            if ($notificationEmail !== "" && filter_var($notificationEmail, FILTER_VALIDATE_EMAIL)) {
-                $mailSubject = "Novo cadastro - Imersao da Base Criminal";
-                $mailBody = implode(PHP_EOL, [
-                    "Novo cadastro recebido:",
-                    "Nome: " . $formData["nome"],
-                    "Instituicao / escritorio: " . $formData["empresa"],
-                    "WhatsApp: " . $formData["whatsapp"],
-                    "E-mail: " . $formData["email"],
-                    "Capturado em: " . $timestamp,
-                ]);
-                $mailFrom = trim((string) getenv("MAIL_FROM"));
-                $mailHeaders = "Content-Type: text/plain; charset=UTF-8\r\n";
-                if ($mailFrom !== "" && filter_var($mailFrom, FILTER_VALIDATE_EMAIL)) {
-                    $mailHeaders .= "From: " . $mailFrom . "\r\n";
-                }
-                $mailSent = function_exists("wp_mail")
-                    ? wp_mail($notificationEmail, $mailSubject, $mailBody, $mailHeaders)
-                    : mail($notificationEmail, $mailSubject, $mailBody, $mailHeaders);
-                if (!$mailSent) {
-                    $noticeMessage = "Cadastro salvo, mas o aviso por e-mail nao foi enviado.";
-                }
-            } else {
-                $noticeMessage = "Configure LEADS_NOTIFICATION_EMAIL para receber os cadastros por e-mail.";
-            }
-
-            $successMessage = "Cadastro realizado com sucesso! Em breve entraremos em contato.";
-            $paymentUnlocked = true;
-            $formData = ["nome" => "", "empresa" => "", "whatsapp" => "", "email" => ""];
-        } catch (Throwable $exception) {
-            $errors[] = "Nao foi possivel registrar seu cadastro agora. Tente novamente em alguns instantes.";
-        }
-    }
-}
+get_header();
 ?>
-<!DOCTYPE html>
-<html lang="pt-BR">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Imersão da Base Criminal | Formação Prática Criminal</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link
-        href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Playfair+Display:wght@500;600;700&display=swap"
-        rel="stylesheet">
-    <link rel="stylesheet" href="<?php echo esc_url(get_template_directory_uri() . '/style.css'); ?>">
+<div class="event-page">
+    <header
+        class="event-hero"
+        id="topo"
+        style="--hero-bg-desktop: url('<?php echo esc_url(get_template_directory_uri() . '/imgs/backgroundAtt.jpg'); ?>'); --hero-bg-mobile: url('<?php echo esc_url(get_template_directory_uri() . '/imgs/BanerBrunoMatheus.jpg'); ?>');"
+    >
+        <div class="event-shell">
+            <nav class="event-nav" aria-label="Navegação principal">
+                <a class="event-brand" href="#topo" aria-label="Base Criminal - início">
+                    <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Logo-transparent.png'); ?>" alt="Base Criminal">
+                </a>
+                <div class="event-nav__actions">
+                    <a class="nav-consult" href="<?php echo esc_url(home_url('/?page_id=57')); ?>">Consultar meu ingresso</a>
+                    <a class="nav-cta" href="#ingresso">Garantir ingresso <span aria-hidden="true">&#8599;</span></a>
+                </div>
+            </nav>
 
-</head>
-
-<body>
-    <div class="event-page">
-        <header class="event-hero" id="topo">
-            <div class="event-shell">
-                <nav class="event-nav"><span class="event-brand"><img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Logo-transparent.png'); ?>" alt="Logo Base Criminal"></span><a href="#ingresso">Garantir
-                        ingresso</a></nav>
-                        <div class="event-hero-copy"><span class="event-kicker"></span>
-                            <h1>Imersão da <span>Base Criminal</span></h1>
-                    <p>Do flagrante à liberdade: estratégia e atuação nas primeiras horas da defesa criminal.</p><a
-                        class="event-button" href="#ingresso">Quero garantir minha vaga</a>
-                    <div class="event-facts">
-                        <div><strong>26 de setembro</strong><small>das 09h às 18h</small></div>
-                        <div><strong>45 vagas</strong><small>encontro exclusivo</small></div>
-                        <div><strong>Vila Andrade</strong><small>São Paulo / SP</small></div>
+            <div class="hero-layout">
+                <div class="event-hero-copy">
+                    <p class="event-kicker"><span class="pulse-dot"></span> Imersão presencial para criminalistas</p>
+                    <h1>Do flagrante <em>à liberdade</em></h1>
+                    <p class="hero-subtitle">A estratégia que sustenta uma defesa criminal segura nas primeiras horas.</p>
+                    <div class="hero-actions">
+                        <a class="event-button" href="#ingresso">Quero minha vaga <span aria-hidden="true">&#8594;</span></a>
+                        <a class="hero-link" href="#programa">Conhecer a imersão <span aria-hidden="true">&#8595;</span></a>
                     </div>
+                </div>
+                <!-- <aside class="hero-event-card" aria-label="Informações do evento">
+                    <span class="card-label">Próxima edição</span>
+                    <strong>26<span>SET</span></strong>
+                    <p>Sábado<br>09h às 18h</p>
+                    <div class="card-rule"></div>
+                    <p class="event-location">Vila Andrade<br><span>São Paulo, SP</span></p>
+                </aside> -->
+            </div>
+            <div class="hero-proof" >
+                <p><strong>26 Set 2026</strong><span>Sábado das 9h às 18h</span></p>
+                <p><strong>45 vagas</strong><span>Turma intimista para uma experiência real de troca</span></p>
+                <p><strong>100% presencial</strong><span>Um dia inteiro para quem quer sair do lugar comum</span></p>
+            </div>
+        </div>
+    </header>
+
+    <aside class="event-stock-alert" aria-label="Disponibilidade de ingressos">
+        <div class="event-shell event-stock-alert__inner">
+            <div class="event-stock-alert__message">
+                <span class="event-stock-alert__icon" aria-hidden="true">!</span>
+                <p><strong>Não perca a chance.</strong> <?php echo esc_html((string) $ticketSoldPercentage); ?>% das vagas já foram vendidas.</p>
+            </div>
+            <div class="event-stock-alert__progress" aria-hidden="true">
+                <span style="width: <?php echo esc_attr((string) $ticketSoldPercentage); ?>%;"></span>
+            </div>
+        </div>
+    </aside>
+
+    <main>
+    
+        <section class="event-section manifest-section">
+
+            <div class="event-shell manifest-grid">
+                <p class="vertical-label">Base Criminal 2026</p>
+                <div>
+                    <h2 class="event-kicker">Não é sobre decorar procedimentos</h2>
+                    <h2 class="event-heading">A defesa não começa no processo.<br><span>Ela começa na decisão.</span></h2>
+                </div>
+                <div class="manifest-copy">
+                    <p>Nas primeiras horas, cada escolha muda o rumo de uma história. Esta imersão foi desenhada para quem quer construir estratégia com leitura de caso, presença e técnica.</p>
+                    <a class="text-link" href="#programa">Entenda a experiência <span aria-hidden="true">&#8594;</span></a>
                 </div>
             </div>
-        </header>
-        <main>
-            <section class="event-section">
-                <div class="event-shell">
-                    <span class="event-kicker">O tema você já descobriu</span>
-                    <h2 class="event-heading">A defesa começa <span>antes do processo.</span></h2>
-                    <p class="event-copy">Uma experiência prática de análise, estratégia e atuação criminal,
-                        partindo do flagrante até os primeiros pedidos de liberdade.</p><a class="event-button"
-                        href="#ingresso">Inscrições abertas</a>
-                </div>
-            </section>
+        </section>
 
-            <section class="event-section alt">
-                <div class="event-shell content-section"><span class="event-kicker">O que você vai levar da imersão</span>
-                    <h2 class="event-heading">Casos reais. <span>Estratégia real.</span></h2>
-                    <div class="content-feature-grid">
-                        <img class="event-art" src="<?php echo esc_url(get_template_directory_uri() . '/imgs/jail.jpeg'); ?>" alt="Cela de uma prisão">
-                        <ul class="content-list">
-                            <li>Análise de casos reais de flagrante</li>
-                            <li>Estratégias de defesa nas primeiras horas</li>
-                            <li>Simulação de audiência de custódia</li>
-                            <li>Modelos de petições e pedidos de liberdade</li>
-                            <li>Networking com profissionais da área criminal</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <section class="event-cronograma">
-                <div class="event-shell cronograma-grid">
+        <section class="event-section program-section" id="programa">
+            <div class="event-shell">
+                <div class="section-intro">
                     <div>
-                        <span class="event-kicker">Um dia inteiro de prática criminal</span>
-                        <h2 class="event-heading">Cronograma da <span>imersão</span></h2>
-                        <ul class="schedule-list">
-                            <li><span class="schedule-time">09h</span><span class="schedule-label">Chegada, credenciamento e coffee break</span></li>
-                            <li><span class="schedule-time">09h30</span><span class="schedule-label">Começa a imersão</span></li>
-                            <li><span class="schedule-time">12h</span><span class="schedule-label">Pausa para almoço</span></li>
-                            <li><span class="schedule-time">14h</span><span class="schedule-label">Retorno</span></li>
-                            <li><span class="schedule-time">16h</span><span class="schedule-label">Coffee break</span></li>
-                            <li><span class="schedule-time">18h</span><span class="schedule-label">Encerramento e happy hour</span></li>
-                        </ul>
+                        <p class="event-kicker">O que você vai dominar</p>
+                        <h2 class="event-heading">Menos teoria solta.<br><span>Mais critério para agir.</span></h2>
                     </div>
-                    <div class="address-card">
-                        <h3>Endereço</h3>
-                        <div class="address-fact"><strong>26 de setembro</strong><span>Data do encontro</span></div>
-                        <div class="address-fact"><strong>Das 09h às 18h</strong><span>Horário</span></div>
-                        <div class="address-fact"><strong>Av. Giovanni Gronchi, 6195</strong><span>Vila Andrade / São Paulo, SP</span></div>
-                    </div>
+                    <p>Uma jornada que acompanha o momento em que a defesa mais precisa ser precisa.</p>
                 </div>
-            </section>
-
-            <section class="event-section">
-                <div class="event-shell"><span class="event-kicker">Quem estará com a gente</span>
-                    <h2 class="event-heading">Dois profissionais. <br/>
-                        <span>Duas experiências.</span></h2>
-                    <div class="speaker-grid">
-                        <div class="speaker-card">
-                            <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/BrunoSantana.jpeg'); ?>" alt="Dr. Bruno Santana, advogado criminalista">
-                            <h3>Dr. Bruno Santana</h3>
-                            <span>Advogado criminalista | Estratégia e defesa de urgência</span>
-                            <p class="speaker-trajectory">Com 14 anos de atuação fictícia na advocacia criminal, Bruno construiu sua trajetória acompanhando prisões em flagrante, audiências de custódia e pedidos de liberdade em diferentes fases do processo.</p>
-                            <ul class="speaker-highlights">
-                                <li><strong>14 anos</strong><span>de advocacia</span></li>
-                                <li><strong>+320</strong><span>casos acompanhados</span></li>
-                            </ul>
+                <div class="program-grid">
+                    <!-- <article class="program-item featured">
+                        <span class="program-number">01</span>
+                        <h3>O flagrante como ponto de partida</h3>
+                        <p>Leitura imediata do caso, coleta de informações e construção dos primeiros movimentos da defesa.</p>
+                    </article>
+                    <article class="program-item">
+                        <span class="program-number">02</span>
+                        <h3>Estratégia que se sustenta</h3>
+                        <p>Como transformar fatos, documentos e contexto em uma linha defensiva consistente.</p>
+                    </article>
+                   
+                    <article class="program-item">
+                        <span class="program-number">04</span>
+                        <h3>Liberdade e pedidos urgentes</h3>
+                        <p>Estrutura, argumentação e tomada de decisão para os primeiros pedidos de liberdade.</p>
+                    </article>
+                    <article class="program-item">
+                        <span class="program-number">05</span>
+                        <h3>Modelos, repertório e rede</h3>
+                        <p>Materiais de apoio e conversas francas com quem vive a prática criminal todos os dias.</p>
+                    </article> -->
+ <!-- IMAGE ITEMS -->
+                     <article class="program-item image-item">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Delegacia_Foto_Entrada.jpeg'); ?>
+                        " alt="Ambiente de audiência">
+                        <div>
+                            <span class="program-number">01</span><h3>O flagrante como ponto de partida</h3>
                         </div>
-                        <div class="speaker-card">
-                            <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Matheus.jpeg'); ?>" alt="Dr. Matheus Alexandre, advogado criminalista">
-                            <h3>Dr. Matheus Alexandre</h3>
-                            <span>Advogado criminalista | Prática e formação profissional</span>
-                            <p class="speaker-trajectory">Com uma trajetória fictícia de 11 anos no Direito Penal, Matheus atua na construção de estratégias defensivas e na formação prática de novos profissionais para decisões mais seguras desde o primeiro atendimento.</p>
-                            <ul class="speaker-highlights">
-                                <li><strong>11 anos</strong><span>de experiência</span></li>
-                                <li><strong>+40</strong><span>turmas orientadas</span></li>
-                            </ul>
-                        </div>
-                    </div>
+                    </article>
+                    <article class="program-item image-item">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Audiencia.jpeg'); ?>
+                        " alt="Ambiente de audiência">
+                        <div><span class="program-number">02</span><h3>Estratégia que se sustenta</h3></div>
+                    </article>
+                    <article class="program-item image-item">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Forum.jpeg'); ?>
+                        " alt="Ambiente de audiência">
+                        <div><span class="program-number">03</span><h3>Levantamento de provas</h3></div>
+                    </article>
+                    <article class="program-item image-item">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Grade.jpeg'); ?>
+                        " alt="Ambiente de audiência">
+                        <div><span class="program-number">04</span><h3>Liberdade e pedidos urgentes</h3></div>
+                    </article>
+                    <article class="program-item image-item">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Delegacia_Cela.jpeg'); ?>
+                        " alt="Ambiente de audiência">
+                        <div><span class="program-number">05</span><h3>Modelos, repertório e rede</h3></div>
+                    </article>
+                    <article class="program-item image-item">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/Prisao_Algema.jpeg'); ?>
+                        " alt="Ambiente de audiência">
+                        <div><span class="program-number">06</span><h3>Defesa</h3></div>
+                    </article>
+                    
                 </div>
-            </section>
+            </div>
+        </section>
 
-            <section class="event-section alt">
-                <div class="event-shell"><span class="event-kicker">Dúvidas frequentes</span>
-                    <h2 class="event-heading">Tudo o que você precisa <span>saber.</span></h2>
-                    <div class="event-faq">
-                        <details>
-                            <summary>Qual será o tema da imersão?</summary>
-                            <p>Do Flagrante à Liberdade: estratégia e atuação nas primeiras horas da defesa criminal.
-                            </p>
-                        </details>
-                        <details>
-                            <summary>Quando e onde será?</summary>
-                            <p>26 de setembro, das 09h às 18h, na Av. Giovanni Gronchi, 6195, Vila Andrade, São
-                                Paulo/SP.</p>
-                        </details>
-                        <details>
-                            <summary>Quem pode participar?</summary>
-                            <p>Estudantes e profissionais que tenham interesse em Direito Penal e prática criminal.</p>
-                        </details>
-                        <details>
-                            <summary>Vai ter brinde?</summary>
-                            <p>Sim. Todos os participantes receberão um brinde. Os 20 primeiros inscritos terão um
-                                brinde diferenciado e condição especial.</p>
-                        </details>
-                    </div>
+        <section class="event-cronograma" >
+            <div class="event-shell timeline-layout" >
+                <div class="timeline-heading">
+                    <p class="event-kicker">26 de setembro, sábado</p>
+                    <h2 class="event-heading">Um dia para sair com outra <span>forma de enxergar o caso.</span></h2>
                 </div>
-            </section>
+                <ol class="schedule-list">
+                    <li><time>9h</time><p><strong>Chegada e credenciamento</strong><span>Coffee break e conexões iniciais</span></p></li>
+                    <li><time>9h30</time><p><strong>Início da imersão</strong><span>Da abordagem à construção da estratégia</span></p></li>
+                    <li><time>14h</time><p><strong>Retorno dos trabalhos</strong><span>Audiência, liberdade e simulações práticas</span></p></li>
+                    <li><time>18h</time><p><strong>Encerramento e happy hour</strong><span>O aprendizado continua nas conexões</span></p></li>
+                </ol>
+                <aside class="location-panel">
+                    <span class="card-label">Onde estaremos</span>
+                    <h3>Vila Andrade</h3>
+                    <p>Av. Giovanni Gronchi, 6195<br> São Paulo, SP</p>
+                    <a href="https://www.google.com/maps/search/?api=1&query=Av.+Giovanni+Gronchi,+6195,+Sao+Paulo" target="_blank" rel="noopener">Abrir no mapa <span aria-hidden="true">&#8599;</span></a>
+                </aside>
+            </div>
+        </section>
 
-            <section class="event-price" id="ingresso">
-                <div class="event-shell"><span class="event-kicker">Apenas 45 vagas</span>
-                    <h2 class="event-heading">Encontro <span>exclusivo</span></h2>
-                    <div class="ticket-box">
-                        <p class="ticket-price">R$ 397<small>,00 à vista</small></p>
-                        <ul class="ticket-list">
-                            <li>Acesso completo à imersão (09h às 18h)</li>
-                            <li>Coffee break e almoço inclusos</li>
-                            <li>Material de apoio exclusivo</li>
-                            <li>Certificado de participação</li>
-                            <li>Brinde exclusivo de edição limitada</li>
-                        </ul>
-                    </div><?php if ($paymentUnlocked): ?><a class="event-button" href="<?php echo esc_url($paymentLink); ?>">Quero garantir meu ingresso por R$
-                        397,00</a><?php else: ?><p class="event-message">As vagas para esta imersão estão esgotadas.</p><?php endif; ?>
-                </div>
-            </section>
-
-            <section class="event-form" id="captura" aria-labelledby="form-captura">
-                <div class="event-shell event-form-grid">
-                    <div class="event-form-intro"><span class="event-kicker">Garanta sua vaga</span>
-                        <h2 id="form-captura">Inscrições abertas para a Imersão da Base Criminal.</h2>
-                        <p>Preencha seus dados para garantir o contato sobre o ingresso e receber as informações do
-                            encontro.</p>
-                    </div>
+        <section class="event-section speakers-section">
+            <div class="event-shell">
+                <div class="section-intro speaker-intro">
                     <div>
-                        <div class="messages" aria-live="polite"><?php if ($successMessage !== ""): ?>
-                                <p class="event-message"><?php echo h($successMessage); ?></p>
-                            <?php endif; ?><?php if ($noticeMessage !== ""): ?>
-                                <p class="event-message"><?php echo h($noticeMessage); ?></p>
-                            <?php endif; ?><?php foreach ($errors as $error): ?>
-                                <p class="event-message"><?php echo h($error); ?></p><?php endforeach; ?>
-                        </div>
-                        <form method="post" action="#captura" novalidate>
-                            <div class="field"><label for="nome">Nome completo</label><input type="text" id="nome"
-                                    name="nome" placeholder="Seu nome" required
-                                    value="<?php echo h($formData["nome"]); ?>"></div>
-                            <div class="field"><label for="empresa">Instituição / escritório</label><input type="text"
-                                    id="empresa" name="empresa" placeholder="Nome da instituição" required
-                                    value="<?php echo h($formData["empresa"]); ?>"></div>
-                            <div class="field"><label for="whatsapp">WhatsApp</label><input type="tel" id="whatsapp"
-                                    name="whatsapp" placeholder="(11) 99999-9999" required
-                                    value="<?php echo h($formData["whatsapp"]); ?>"></div>
-                            <div class="field"><label for="email">E-mail</label><input type="email" id="email"
-                                    name="email" placeholder="voce@email.com" required
-                                    value="<?php echo h($formData["email"]); ?>"></div>
-                            <p class="integracao-note">Seus dados serão usados para contato sobre a inscrição.</p>
-                            <div class="field full"><button class="event-button" type="submit">Garantir minha
-                                    vaga</button></div>
-                            <?php if ($paymentUnlocked): ?>
-                                <div class="field full"><a class="event-button" href="<?php echo esc_url($paymentLink); ?>">Ir para o pagamento</a></div>
-                            <?php endif; ?>
-                        </form>
+                        <p class="event-kicker">Quem conduz a imersão</p>
+                        <h2 class="event-heading">Vivência de quem está <span>na linha de frente.</span></h2>
                     </div>
+                    <p>Dois profissionais que transformam repertório de campo em uma conversa franca, aplicável e sem atalhos.</p>
                 </div>
-            </section>
-
-            <section class="next-immersion">
-                <div class="event-shell"><span class="event-kicker">Prepare-se</span>
-                    <h2 class="event-heading">Fique <span>ligado!</span></h2>
-                    <p>A nossa primeira Imersão foi só o começo. Novas experiências, novos casos e muito conteúdo
-                        ainda estão por vir.</p>
-                    <p>Fique de olho nas próximas Imersões da Base Criminal e não perca a oportunidade de estar com a
-                        gente nos próximos encontros.</p>
-                    <div class="teaser-box"><span class="event-kicker">Em breve, teremos novidades</span>
-                        <p class="teaser-lead">A defesa começa antes do processo</p>
-                        <h3>Imersão da Base Criminal<span>Do flagrante à liberdade</span></h3>
-                        <p>E você vai aprender a pensar estrategicamente desde as primeiras horas.</p>
-                        <div class="teaser-facts">
-                            <div><strong>29 de setembro</strong><span>Data</span></div>
-                            <div><strong>09h às 18h</strong><span>Horário</span></div>
-                        </div><a class="event-button" href="#ingresso">Inscrições abertas</a>
-                    </div>
+                <div class="speaker-grid">
+                    <article class="speaker-card">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/BrunoSantana.jpeg'); ?>" alt="Dr. Bruno Santana">
+                        <div class="speaker-card-content"><span class="speaker-role">Estratégia e defesa de urgência</span><h3>Dr. Bruno<br>Santana</h3><p>Advogado criminalista, com experiência em flagrantes, audiências de custódia e pedidos de liberdade.</p></div>
+                    </article>
+                    <article class="speaker-card speaker-card-offset">
+                        <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/matheusBaner.jpeg'); ?>" alt="Dr. Matheus Alexandre">
+                        <div class="speaker-card-content"><span class="speaker-role">Prática e formação profissional</span><h3>Dr. Matheus<br>Alexandre</h3><p>Advogado criminalista dedicado a construir estratégias defensivas desde o primeiro atendimento.</p></div>
+                    </article>
                 </div>
-            </section>
-            
-        </main>
-        <footer class="event-footer">Base Criminal | Formação Prática Criminal</footer>
-    </div>
-    <a class="whatsapp-float" href="<?php echo esc_url($eventWhatsappLink); ?>" aria-label="Falar sobre o evento pelo WhatsApp" target="_blank" rel="noopener">
-        <img class="whatsapp-float-icon" src="<?php echo esc_url(get_template_directory_uri() . '/imgs/whatsapp.jpg'); ?>" alt="">
-    </a>
-    <script src="<?php echo esc_url(get_template_directory_uri() . '/script.js'); ?>"></script>
-</body>
+            </div>
+        </section>
 
-</html>
+        <section class="event-price" id="ingresso">
+            <div class="event-shell offer-layout">
+                <div class="offer-copy">
+                    <p class="event-kicker">Turma limitada a 45 participantes</p>
+                    <h2 class="event-heading">Uma experiência que continua <span>na sua próxima atuação.</span></h2>
+                    <p>Garanta sua presença em um encontro feito para mudar o nível da sua prática criminal.</p>
+                </div>
+                <div class="ticket-box">
+                    <div class="ticket-top"><span>Imersão Base Criminal</span><strong>Presencial</strong></div>
+                    <p class="ticket-price">R$ 397<small>,00</small></p>
+                    <ul class="ticket-list">
+                        <li>Acesso ao encontro completo, das 9h às 18h</li>
+                        <li>Coffee break</li>
+                        <li>Material de apoio exclusivo</li>
+                        <li>Dúvidas esclarecidas ao longo do evento</li>
+                        <li>Brindes exclusivos</li>
+                        <li>Certificado de participação</li>
+                    </ul>
+                    <?php if ($paymentUnlocked): ?>
+                        <a class="event-button" href="<?php echo esc_url($paymentLink); ?>">Garantir meu ingresso <span aria-hidden="true">&#8594;</span></a>
+                    <?php else: ?>
+                        <p class="event-message">As vagas para esta imersão estão esgotadas.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+        </section>
+
+        <section class="event-section faq-section">
+            <div class="event-shell faq-layout">
+                <div><p class="event-kicker">Perguntas frequentes</p><h2 class="event-heading">O que você precisa saber sobre este <span>evento.</span></h2></div>
+                <div class="event-faq">
+                    <details open><summary>Qual será o tema da imersão?</summary><p>Do flagrante à liberdade: estratégia e atuação nas primeiras horas da defesa criminal.</p></details>
+                    <details><summary>Quando e onde será?</summary><p>Em 26 de setembro, das 9h às 18h, na Av. Giovanni Gronchi, 6195, Vila Andrade, São Paulo/SP.</p></details>
+                    <details><summary>Quem pode participar?</summary><p>Estudantes e profissionais que tenham interesse em Direito Penal e prática criminal.</p></details>
+                    <details><summary>O que está incluso no ingresso?</summary><p>O ingresso inclui a imersão completa, coffee break e certificado.</p></details>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="event-footer"><span>Base Criminal</span> Formação prática para uma defesa que chega antes.</footer>
+</div>
+<a class="whatsapp-float" href="<?php echo esc_url($eventWhatsappLink); ?>" aria-label="Falar sobre o evento pelo WhatsApp" target="_blank" rel="noopener"><img class="whatsapp-float-icon" src="<?php echo esc_url(get_template_directory_uri() . '/imgs/whatsapp.jpg'); ?>" alt=""></a>
+<?php get_footer(); ?>

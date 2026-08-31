@@ -1,0 +1,76 @@
+BASE CRIMINAL V2 — AJUSTES REALIZADOS
+
+1. Checkout isolado em checkout.css
+   - O CSS é carregado somente no template page-finalizarcompra.php.
+   - Evita conflitos entre a landing page e o WooCommerce Blocks.
+
+2. Correção crítica no style.css
+   - Os estilos genéricos de form, label e input agora estão limitados a .form-grid.
+   - Antes, o form global recebia display:grid e grid-template-columns:1fr 1fr,
+     quebrando o formulário interno do checkout do WooCommerce.
+
+3. page-finalizarcompra.php simplificado
+   - Mantém the_content() para o WooCommerce renderizar seus blocos nativamente.
+   - Não duplica campos, pagamento, resumo ou botão de pedido.
+   - Adiciona apenas cabeçalho visual e indicadores de confiança.
+
+4. functions.php melhorado
+   - CSS e JS agora usam wp_enqueue_style/wp_enqueue_script.
+   - checkout.css é carregado apenas no checkout personalizado.
+   - Mantido o comportamento de limpar o carrinho e adicionar 1 ingresso.
+
+5. header.php/footer.php
+   - Removidos links/scripts manuais duplicados.
+   - WordPress passa a controlar corretamente a ordem dos assets e dependências.
+
+IMPORTANTE NO WORDPRESS
+- A página de checkout deve estar usando o template "Checkout - Finalizar Compra".
+- O conteúdo da página deve continuar contendo o bloco oficial WooCommerce Checkout.
+- Limpe cache do WordPress/plugin/CDN e faça Ctrl+F5 após atualizar o tema.
+
+============================================================
+NOVO — SISTEMA DE INSCRIÇÕES / INGRESSOS
+============================================================
+
+1. CPF obrigatório no Checkout Blocks, com validação matemática.
+2. CPF salvo no pedido pelo sistema oficial de Additional Checkout Fields do WooCommerce.
+3. Quando o pagamento é confirmado, o pedido recebe um código único no formato BC26-XXXX-XXXX.
+4. O cliente recebe no e-mail um botão “Visualizar meu ingresso”.
+5. A página /consultar-inscricao/ permite consultar por CPF + e-mail.
+6. O ingresso mostra CPF e e-mail mascarados.
+7. O ingresso possui QR Code para /validar-ingresso/, assinado para evitar adulteração simples.
+8. A página de validação mostra apenas dados mínimos e o status atual do pedido.
+9. As páginas “Consultar inscrição” e “Validar ingresso” são criadas automaticamente ao acessar o painel do WordPress como administrador.
+10. Pedidos PIX pendentes não recebem ingresso válido até o WooCommerce confirmar o pagamento.
+
+OBSERVAÇÃO SOBRE QR CODE:
+O desenho do QR Code é carregado pela API pública api.qrserver.com. O conteúdo enviado à API é somente a URL assinada de validação do ingresso; CPF, nome e e-mail não são enviados para esse serviço.
+
+SEGURANÇA:
+A consulta pública não usa CPF sozinho. É obrigatório informar CPF + e-mail. O link enviado por e-mail usa código do ingresso + chave privada do pedido WooCommerce.
+
+
+ATUALIZAÇÃO CONSULTA/PEDIDO:
+- Consulta aceita pedidos pendentes, processando ou concluídos.
+- CPF agora é localizado também nos metadados comuns de plugins brasileiros/PagBank.
+- Pedido pendente aparece como 'Aguardando confirmação do pagamento'.
+- Checkout de compra direcionado para a página ID 35.
+- Header da landing ganhou 'Consultar meu ingresso'.
+
+
+AJUSTES DE 31/08/2026 - BANNER RESPONSIVO E FAIXA DE VENDAS
+- Desktop mantém imgs/backgroundAtt.jpg.
+- Celulares/tablets até 820px usam imgs/BanerBrunoMatheus.jfif.
+- Para trocar apenas a imagem mobile, substitua BanerBrunoMatheus.jfif por outra imagem mantendo o mesmo nome, ou altere --hero-bg-mobile em index.php.
+- Foi adicionada uma faixa logo após o banner com percentual de vagas vendidas.
+- O percentual usa o total de vendas do produto WooCommerce ID 18 dividido pela capacidade fixa de 45 vagas.
+- Caso a capacidade mude, altere $ticketCapacity = 45 no início de index.php.
+
+
+AJUSTES 31/08/2026
+- Banner desktop mantém backgroundAtt.jpg sem camada escura sobre a foto.
+- Banner mobile usa imgs/baner display_mobile_att.jpg.
+- A porcentagem da faixa de alerta agora é MANUAL no index.php:
+  $ticketSoldPercentage = 50;
+  Troque 50 por qualquer valor de 0 a 100.
+- Foram adicionados degradês suaves nas seções principais para enriquecer o visual sem alterar a estrutura.
