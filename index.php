@@ -60,8 +60,8 @@ get_header();
                 </aside> -->
             </div>
             <div class="hero-proof" >
-                <p><strong>26 Set 2026</strong><span>Sábado das 9h às 18h</span></p>
-                <p><strong>45 vagas</strong><span>Turma intimista para uma experiência real de troca</span></p>
+                <p><strong>03 Out 2026</strong><span>Sábado das 9h às 18h</span></p>
+                <p><strong>Vagas limitadas</strong><span>Turma intimista para uma experiência real de troca</span></p>
                 <p><strong>100% presencial</strong><span>Um dia inteiro para quem quer sair do lugar comum</span></p>
             </div>
         </div>
@@ -71,7 +71,7 @@ get_header();
         <div class="event-shell event-stock-alert__inner">
             <div class="event-stock-alert__message">
                 <span class="event-stock-alert__icon" aria-hidden="true">!</span>
-                <p><strong>Não perca a chance.</strong> <?php echo esc_html((string) $ticketSoldPercentage); ?>% das vagas já foram vendidas.</p>
+                <p><strong>Não perca a chance.</strong> <?php echo esc_html((string) $ticketSoldPercentage); ?>% das vagas já foram preenchidas.</p>
             </div>
             <div class="event-stock-alert__progress" aria-hidden="true">
                 <span style="width: <?php echo esc_attr((string) $ticketSoldPercentage); ?>%;"></span>
@@ -168,14 +168,17 @@ get_header();
         <section class="event-cronograma" >
             <div class="event-shell timeline-layout" >
                 <div class="timeline-heading">
-                    <p class="event-kicker">26 de setembro, sábado</p>
+                    <p class="event-kicker">03 de outubro, sábado</p>
                     <h2 class="event-heading">Um dia para sair com outra <span>forma de enxergar o caso.</span></h2>
                 </div>
                 <ol class="schedule-list">
-                    <li><time>9h</time><p><strong>Chegada e credenciamento</strong><span>Coffee break e conexões iniciais</span></p></li>
+                    <li><time>9h</time><p><strong>Chegada e credenciamento</strong>
+                    <span>Recepção, boas-vindas e conexões iniciais.</span></p>
+</li>
                     <li><time>9h30</time><p><strong>Início da imersão</strong><span>Da abordagem à construção da estratégia</span></p></li>
-                    <li><time>14h</time><p><strong>Retorno dos trabalhos</strong><span>Audiência, liberdade e simulações práticas</span></p></li>
-                    <li><time>18h</time><p><strong>Encerramento e happy hour</strong><span>O aprendizado continua nas conexões</span></p></li>
+                    <li><time>12h30</time><p><strong>Pausa para o almoço</strong><span></span></p></li>
+                    <li><time>14h</time><p><strong>Retorno da imersão</strong><span>Audiência, liberdade e simulações práticas</span></p></li>
+                    <li><time>18h</time><p><strong>Encerramento</strong><span></span></p></li>
                 </ol>
                 <aside class="location-panel">
                     <span class="card-label">Onde estaremos</span>
@@ -198,11 +201,13 @@ get_header();
                 <div class="speaker-grid">
                     <article class="speaker-card">
                         <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/BrunoSantana.jpeg'); ?>" alt="Dr. Bruno Santana">
-                        <div class="speaker-card-content"><span class="speaker-role">Estratégia e defesa de urgência</span><h3>Dr. Bruno<br>Santana</h3><p>Advogado criminalista, com experiência em flagrantes, audiências de custódia e pedidos de liberdade.</p></div>
+                        <div class="speaker-card-content"><span class="speaker-role">Estratégia e defesa de urgência</span><h3>Dr. Bruno<br>Santana</h3>
+                        <p>Advogado criminalista, com experiência em flagrantes, audiências de custódia e pedidos de liberdade.</p></div>
                     </article>
                     <article class="speaker-card speaker-card-offset">
                         <img src="<?php echo esc_url(get_template_directory_uri() . '/imgs/matheusBaner.jpeg'); ?>" alt="Dr. Matheus Alexandre">
-                        <div class="speaker-card-content"><span class="speaker-role">Prática e formação profissional</span><h3>Dr. Matheus<br>Alexandre</h3><p>Advogado criminalista dedicado a construir estratégias defensivas desde o primeiro atendimento.</p></div>
+                        <div class="speaker-card-content"><span class="speaker-role">Prática e formação profissional</span><h3>Dr. Matheus<br>Alexandre</h3>
+                        <p>Advogado criminalista especializado em Jurisprudência penal do STF e STJ e em defesa criminal desde o primeiro momento.</p></div>
                     </article>
                 </div>
             </div>
@@ -211,7 +216,7 @@ get_header();
         <section class="event-price" id="ingresso">
             <div class="event-shell offer-layout">
                 <div class="offer-copy">
-                    <p class="event-kicker">Turma limitada a 45 participantes</p>
+                    <p class="event-kicker">Turma limitada</p>
                     <h2 class="event-heading">Uma experiência que continua <span>na sua próxima atuação.</span></h2>
                     <p>Garanta sua presença em um encontro feito para mudar o nível da sua prática criminal.</p>
                 </div>
@@ -219,12 +224,12 @@ get_header();
                     <div class="ticket-top"><span>Imersão Base Criminal</span><strong>Presencial</strong></div>
                     <p class="ticket-price">R$ 397<small>,00</small></p>
                     <ul class="ticket-list">
-                        <li>Acesso ao encontro completo, das 9h às 18h</li>
-                        <li>Coffee break</li>
-                        <li>Material de apoio exclusivo</li>
-                        <li>Dúvidas esclarecidas ao longo do evento</li>
-                        <li>Brindes exclusivos</li>
-                        <li>Certificado de participação</li>
+                        <li><details><summary>Imersão presencial intensiva</summary><p>Um dia inteiro de conteúdo prático para elevar o nível da sua atuação criminal.</p></details></li>
+                        <li><details><summary>Proximidade e acesso direto aos palestrantes</summary><p>Canal aberto para tirar dúvidas e trocar experiências de perto.</p></details></li>
+                        <li><details><summary>Networking de alto impacto</summary><p>Conexão estratégica com advogados e estudantes para futuras parcerias e indicações.</p></details></li>
+                        <li><details><summary>Material exclusivo e personalizado</summary><p>Ferramentas e conteúdos criados para você acompanhar o evento e aplicar na prática.</p></details></li>
+                        <li><details><summary>Brindes especiais</summary><p>Exclusivo para os participantes do evento.</p></details></li>
+                        <li><details><summary>Certificado oficial de participação</summary><p>Comprovação que fortalece seu posicionamento no mercado e currículo.</p></details></li>
                     </ul>
                     <?php if ($paymentUnlocked): ?>
                         <a class="event-button" href="<?php echo esc_url($paymentLink); ?>">Garantir meu ingresso <span aria-hidden="true">&#8594;</span></a>
@@ -237,12 +242,15 @@ get_header();
 
         <section class="event-section faq-section">
             <div class="event-shell faq-layout">
-                <div><p class="event-kicker">Perguntas frequentes</p><h2 class="event-heading">O que você precisa saber sobre este <span>evento.</span></h2></div>
+                <div><p class="event-kicker">Perguntas Frequentes (FAQ)</p><h2 class="event-heading">O que você precisa saber sobre este <span>evento.</span></h2></div>
                 <div class="event-faq">
-                    <details open><summary>Qual será o tema da imersão?</summary><p>Do flagrante à liberdade: estratégia e atuação nas primeiras horas da defesa criminal.</p></details>
-                    <details><summary>Quando e onde será?</summary><p>Em 26 de setembro, das 9h às 18h, na Av. Giovanni Gronchi, 6195, Vila Andrade, São Paulo/SP.</p></details>
-                    <details><summary>Quem pode participar?</summary><p>Estudantes e profissionais que tenham interesse em Direito Penal e prática criminal.</p></details>
-                    <details><summary>O que está incluso no ingresso?</summary><p>O ingresso inclui a imersão completa, coffee break e certificado.</p></details>
+                    <details open><summary>Qual é o tema principal da imersão?</summary><p>O tema é "Do flagrante à liberdade: estratégia e atuação nas primeiras horas da defesa criminal". É um treinamento 100% prático focado nas etapas decisivas e de maior impacto da advocacia criminal.</p></details>
+                    <details><summary>Quando e onde será o evento?</summary><p>A imersão acontecerá no dia 03 de outubro, das 9h às 18h, na Av. Giovanni Gronchi, 6195 - Vila Andrade, São Paulo/SP.</p></details>
+                    <details><summary>Para quem é esta imersão?</summary><p>O evento é direcionado para estudantes de Direito e advogados que buscam mais conhecimento para ingressar na área criminal e querem aprender exatamente o que é aplicado na prática.</p></details>
+                    <details><summary>O que está incluso no meu ingresso?</summary><p>Seu ingresso garante acesso completo à imersão (9h às 18h), material de apoio personalizado, brindes, certificado digital de participação e espaço dedicado a networking de alto nível.</p></details>
+                    <details><summary>Não moro em SP ou não posso ir presencialmente. Haverá transmissão on-line ou gravação?</summary><p>Esta será uma experiência 100% presencial para garantir a dinâmica de networking, troca de experiências e proximidade total com os palestrantes.</p></details>
+                    <details><summary>Como funciona a emissão e a carga horária do certificado?</summary><p>Todos os participantes receberão um certificado digital de 9 horas após a realização do evento.</p></details>
+                    <details><summary>Comprei meu ingresso e não vou conseguir ir, posso transferir para outra pessoa?</summary><p>Sim, você pode transferir o seu ingresso. Qualquer dúvida, basta entrar em contato com a nossa equipe pelo botão do WhatsApp disponível aqui na página.</p></details>
                 </div>
             </div>
         </section>
